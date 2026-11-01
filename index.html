@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>¡Practiquemos Español!</title>
+<style>
+  :root {
+    --bg: #faf6f0; --card: #ffffff; --ink: #2a2522; --muted: #6f655d; --line: #e6ddd2;
+    --accent: #c0392b; --accent-soft: #fbe9e6; --ok: #1e7d4f; --ok-soft: #e3f4ea;
+    --bad: #b3261e; --bad-soft: #fbe4e2; --gold: #d99a1e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1816; --card: #262220; --ink: #f1ebe4; --muted: #b0a59a; --line: #3a3430;
+      --accent: #ef6b5b; --accent-soft: #3a2421; --ok: #5cc98f; --ok-soft: #1f3328;
+      --bad: #f08a80; --bad-soft: #3d2220; --gold: #f0b84a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 17px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.7rem; margin: 0 0 4px; }
+  h1 span { color: var(--accent); }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+  label.lbl { display: block; font-weight: 600; margin: 0 0 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .chip { border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 999px;
+    padding: 6px 14px; font: inherit; font-size: .92rem; cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn { display: inline-block; border: 0; border-radius: 10px; padding: 12px 22px; font: inherit; font-weight: 600;
+    cursor: pointer; background: var(--accent); color: #fff; }
+  .btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .meta { display: flex; justify-content: space-between; color: var(--muted); font-size: .9rem; margin-bottom: 8px; }
+  .bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin-bottom: 18px; }
+  .bar i { display: block; height: 100%; background: var(--accent); transition: width .3s; }
+  .tags { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+  .tag { font-size: .78rem; padding: 2px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .tag.d { background: transparent; border: 1px solid var(--line); color: var(--muted); }
+  .q { font-size: 1.15rem; font-weight: 600; margin: 0 0 16px; }
+  .opts { display: grid; gap: 10px; }
+  .opt { text-align: left; border: 1.5px solid var(--line); background: var(--card); color: var(--ink); border-radius: 10px;
+    padding: 12px 14px; font: inherit; cursor: pointer; display: flex; gap: 10px; }
+  .opt b { color: var(--muted); }
+  .opt:hover:not(:disabled) { border-color: var(--accent); }
+  .opt:disabled { cursor: default; }
+  .opt.ok { border-color: var(--ok); background: var(--ok-soft); }
+  .opt.bad { border-color: var(--bad); background: var(--bad-soft); }
+  .exp { margin-top: 16px; padding: 12px 14px; border-radius: 10px; font-size: .95rem; }
+  .exp.ok { background: var(--ok-soft); } .exp.bad { background: var(--bad-soft); }
+  .exp strong { display: block; margin-bottom: 2px; }
+  .score { font-size: 3rem; font-weight: 800; margin: 0; color: var(--accent); }
+  .review { margin-top: 12px; }
+  .review div { border-top: 1px solid var(--line); padding: 12px 0; font-size: .95rem; }
+  .review .yours { color: var(--bad); } .review .right { color: var(--ok); }
+  .hidden { display: none; }
+  footer { color: var(--muted); font-size: .82rem; text-align: center; margin-top: 24px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>¡Practiquemos <span>Español</span>!</h1>
+  <p class="sub">Questões de múltipla escolha para revisar o que já estudamos (aulas 1–73).</p>
+
+  <section id="setup" class="card">
+    <label class="lbl">Temas</label>
+    <div class="chips" id="themes"></div>
+    <label class="lbl">Dificuldade</label>
+    <div class="chips" id="levels"></div>
+    <label class="lbl">Quantidade de perguntas</label>
+    <div class="chips" id="sizes"></div>
+    <div class="row">
+      <button class="btn" id="start">Começar</button>
+      <span class="sub" id="available" style="margin:0"></span>
+    </div>
+  </section>
+
+  <section id="quiz" class="card hidden">
+    <div class="meta"><span id="counter"></span><span id="points"></span></div>
+    <div class="bar"><i id="progress"></i></div>
+    <div class="tags" id="qtags"></div>
+    <p class="q" id="qtext"></p>
+    <div class="opts" id="opts"></div>
+    <div id="feedback"></div>
+    <div class="row" style="margin-top:16px; justify-content:flex-end">
+      <button class="btn hidden" id="next">Próxima →</button>
+    </div>
+  </section>
+
+  <section id="result" class="card hidden">
+    <p class="sub" style="margin:0">Resultado</p>
+    <p class="score" id="final"></p>
+    <p id="verdict" style="margin-top:0"></p>
+    <div class="row">
+      <button class="btn" id="again">Novo teste</button>
+      <button class="btn ghost" id="redo" >Refazer só os erros</button>
+    </div>
+    <div class="review" id="review"></div>
+  </section>
+
+  <footer>Baseado nos temas de “Gramática y Práctica de Español para Brasileños” (A. Fanjul). As perguntas mudam a cada teste.</footer>
+</main>
+
+<script>
+const THEMES = {
+  art: "Artigos e gênero", het: "Falsos amigos", muy: "Muy/mucho e apócope", ser: "Ser, estar, haber",
+  pres: "Presente", gus: "Gustar e similares", pro: "Pronomes", pas: "Passados", fut: "Futuro e condicional",
+  per: "Perífrases", prep: "Preposições", imp: "Imperativo", sub: "Subjuntivo", out: "Outros",
+  tpe: "Tradução PT → ES", tep: "Tradução ES → PT"
+};
+const LEVELS = { 1: "Fácil", 2: "Médio", 3: "Difícil" };
+
+// [tema, dificuldade, pergunta, [correta, ...erradas], explicação]
+const Q = [
+  // Artigos e gênero
+  ["art",1,"___ agua de este río está muy fría.",["El","La","Lo","Los"],"Substantivos femininos que começam com “a” tônica usam “el” no singular: el agua, el águila, el hambre."],
+  ["art",2,"___ importante es no rendirse.",["Lo","El","La","Le"],"“Lo” é o artigo neutro: usa-se com adjetivos para expressar uma ideia abstrata (lo bueno, lo importante)."],
+  ["art",1,"Esta noche vamos ___ cine.",["al","a el","en el","para el"],"A + el sempre se contrai em “al” (e de + el em “del”)."],
+  ["art",2,"Nos vemos ___ martes.",["el","en","en el","a el"],"Para dias da semana usa-se o artigo sem preposição: el martes, los sábados."],
+  ["art",2,"Me duele ___ cabeza.",["la","mi","mía","una"],"Com partes do corpo, o espanhol usa o artigo, não o possessivo: me duele la cabeza."],
+  ["art",1,"Son ___ tres de la tarde.",["las","los","a","unas"],"Horas: son las tres, es la una."],
+  ["art",2,"Qual frase está correta?",["El puente es muy largo.","La puente es muy larga.","El puente es muy larga.","Lo puente es muy largo."],"“Puente” é masculino em espanhol (el puente), diferente do português."],
+  ["art",2,"Tengo ___ dolor de cabeza horrible.",["un","una","uno","unos"],"“Dolor” é masculino em espanhol: el dolor, un dolor."],
+  ["art",2,"¿Me pasas ___ sal, por favor?",["la","el","lo","los"],"“Sal” é feminino em espanhol: la sal."],
+  ["art",2,"Me encanta ___ color de tus ojos.",["el","la","lo","los"],"“Color” é masculino em espanhol: el color."],
+  ["art",3,"Qual frase está correta?",["La leche está caliente.","El leche está caliente.","La leche está caliento.","El leche es caliente."],"“Leche” é feminino em espanhol (la leche), e temperatura momentânea usa “estar”."],
+  ["art",3,"El viaje a Perú fue muy ___.",["largo","larga","largos","larguita"],"“Viaje” é masculino em espanhol (el viaje), como todos os terminados em -aje."],
+  ["art",2,"Qual destas palavras é FEMININA em espanhol?",["nariz","árbol","origen","dolor"],"La nariz. Já el árbol, el origen e el dolor são masculinos."],
+
+  // Falsos amigos (heterosemánticos)
+  ["het",2,"O que significa “exquisito”?",["delicioso","estranho","exigente","escondido"],"“Exquisito” = delicioso, requintado. “Esquisito” em português seria “raro” ou “extraño”."],
+  ["het",1,"O que significa “polvo”?",["pó","polvo (animal)","pólvora","poluição"],"“Polvo” = pó. O animal é “pulpo”."],
+  ["het",1,"O que significa “oficina”?",["escritório","oficina mecânica","ofício","loja"],"“Oficina” = escritório. Oficina mecânica é “taller”."],
+  ["het",2,"Como se diz “oficina mecânica” em espanhol?",["taller","oficina","escritorio","fábrica"],"“Taller” = oficina. “Escritorio” é a mesa de trabalho."],
+  ["het",2,"O que significa “un rato”?",["um momento","um rato (animal)","um risco","um pedaço"],"“Rato” = momento, pouco tempo. O animal é “ratón”."],
+  ["het",1,"O que significa “embarazada”?",["grávida","envergonhada","atrapalhada","embaraçada"],"“Embarazada” = grávida. Envergonhada é “avergonzada”."],
+  ["het",2,"O que significa “borracha”?",["bêbada","borracha de apagar","pneu","goma"],"“Borracha” = bêbada. A borracha de apagar é “goma (de borrar)”."],
+  ["het",1,"O que significa “cena”?",["jantar","cena de filme","palco","ceia de Natal apenas"],"“Cena” = jantar (cenar = jantar). Cena de filme é “escena”."],
+  ["het",1,"O que significa “apellido”?",["sobrenome","apelido","nome","alcunha"],"“Apellido” = sobrenome. Apelido é “apodo”."],
+  ["het",2,"O que significa “largo”?",["comprido","largo","gordo","grande"],"“Largo” = comprido. Largo (em português) é “ancho”."],
+  ["het",3,"O que significa “zurdo”?",["canhoto","surdo","teimoso","careca"],"“Zurdo” = canhoto. Surdo é “sordo”."],
+  ["het",2,"O que significa “vaso”?",["copo","vaso de flores","garrafa","jarra"],"“Vaso” = copo. Vaso de flores é “florero” ou “maceta”."],
+  ["het",2,"O que significa “aceite”?",["óleo / azeite","aceite","acesso","acerto"],"“Aceite” = óleo ou azeite (aceite de oliva)."],
+  ["het",2,"O que significa “acordarse”?",["lembrar-se","acordar (despertar)","concordar","combinar"],"“Acordarse (de)” = lembrar-se. Acordar (do sono) é “despertarse”."],
+  ["het",3,"O que significa “brincar”?",["pular","brincar (jogar)","sorrir","enfeitar"],"“Brincar” = pular, saltar. Brincar (de criança) é “jugar”."],
+  ["het",2,"O que significa “cachorro”?",["filhote","cachorro","gato","lobo"],"“Cachorro” = filhote de animal. Cachorro (o cão) é “perro”."],
+  ["het",3,"O que significa “presunto”?",["suposto","presunto (frios)","presumido","prejuízo"],"“Presunto” = suposto (el presunto culpable). Presunto (frios) é “jamón”."],
+  ["het",2,"O que significa “sitio”?",["lugar","sítio (chácara)","cerco","site"],"“Sitio” = lugar. Sítio/chácara seria “finca” ou “granja”."],
+  ["het",2,"O que significa “todavía”?",["ainda","contudo","toda via","sempre"],"“Todavía” = ainda. “Todavia” (português) seria “sin embargo”."],
+  ["het",1,"O que significa “rubio”?",["loiro","ruivo","vermelho","moreno"],"“Rubio” = loiro. Ruivo é “pelirrojo”."],
+  ["het",3,"O que significa “latido”?",["batimento (do coração)","latido de cachorro","lado","choro"],"“Latido” = batida do coração. O latido do cachorro é “ladrido”."],
+  ["het",2,"O que significa “salsa”?",["molho","salsinha","dança apenas","sal"],"“Salsa” = molho. A salsinha (tempero) é “perejil”."],
+  ["het",2,"O que significa “cola” em “hacer cola”?",["fila","cola (adesivo)","cauda de vestido","gole"],"“Hacer cola” = fazer fila. “Cola” também pode ser rabo."],
+
+  // Muy / mucho e apócope
+  ["muy",1,"Hoy hace ___ calor.",["mucho","muy","mucha","muito"],"Antes de substantivo usa-se “mucho/a”."],
+  ["muy",1,"Ella es ___ inteligente.",["muy","mucho","mucha","muito"],"Antes de adjetivo ou advérbio usa-se “muy”."],
+  ["muy",1,"Mi padre trabaja ___.",["mucho","muy","muchos","mucha"],"Depois de verbo usa-se “mucho”."],
+  ["muy",3,"Así es ___ mejor.",["mucho","muy","mucha","más"],"Exceção: antes de mejor, peor, más, menos, mayor e menor usa-se “mucho”."],
+  ["muy",3,"—¿Estás cansado? —Sí, ___.",["mucho","muy","muy mucho","bastante muy"],"“Muy” nunca aparece sozinho no fim da frase; nesse caso usa-se “mucho”."],
+  ["muy",2,"Cervantes fue un ___ escritor.",["gran","grande","gran de","grandes"],"“Grande” vira “gran” antes de substantivo singular."],
+  ["muy",2,"Hoy es el ___ día de clase.",["primer","primero","primo","primera"],"“Primero” e “tercero” perdem o -o antes de substantivo masculino singular."],
+  ["muy",2,"No tengo ___ problema.",["ningún","ninguno","ninguna","nenhum"],"“Ninguno” e “alguno” viram “ningún/algún” antes de substantivo masculino singular."],
+  ["muy",2,"Este libro cuesta ___ euros.",["cien","ciento","cientos","cento"],"“Ciento” vira “cien” antes de substantivo e diante de mil/millones."],
+  ["muy",1,"Hoy hace ___ tiempo.",["mal","malo","mala","males"],"“Malo” e “bueno” viram “mal” e “buen” antes de substantivo masculino singular."],
+  ["muy",2,"Vivo en el ___ piso.",["tercer","tercero","tercera","terceiro"],"Tercero → tercer antes de substantivo masculino singular."],
+
+  // Ser, estar, haber
+  ["ser",1,"Madrid ___ en España.",["está","es","hay","tiene"],"Localização de algo definido usa “estar”."],
+  ["ser",1,"En la mesa ___ dos libros.",["hay","están","son","tienen"],"Para indicar existência de algo indefinido usa-se “hay”."],
+  ["ser",1,"Los libros ___ en la mesa.",["están","hay","son","tienen"],"Com artigo definido (los libros) usa-se “estar”, não “hay”."],
+  ["ser",1,"Mi hermano ___ médico.",["es","está","hay","tiene"],"Profissão usa “ser”."],
+  ["ser",2,"Esta sopa ___ muy rica.",["está","es","hay","tiene"],"Para avaliar o sabor de algo naquele momento usa-se “estar”."],
+  ["ser",3,"La fiesta ___ en casa de Marta.",["es","está","hay","tiene"],"Eventos (fiestas, reuniões) “tienen lugar”: usa-se “ser” para dizer onde acontecem."],
+  ["ser",3,"Pedro saca buenas notas; ___ muy listo.",["es","está","hay","queda"],"“Ser listo” = ser inteligente. “Estar listo” = estar pronto."],
+  ["ser",1,"Perdone, ¿___ una farmacia por aquí?",["hay","está","es","tiene"],"Pergunta sobre existência de algo indefinido: “hay”."],
+  ["ser",2,"El niño ___ aburrido porque no tiene nada que hacer.",["está","es","hay","tiene"],"“Estar aburrido” = estar entediado. “Ser aburrido” = ser chato."],
+
+  // Presente
+  ["pres",1,"Yo siempre ___ la verdad. (decir)",["digo","dico","dizo","decio"],"Decir é irregular: digo, dices, dice..."],
+  ["pres",1,"Yo no ___ dónde vive. (saber)",["sé","sabo","sei","sepo"],"Saber na 1ª pessoa: sé."],
+  ["pres",2,"Nosotros ___ a casa a las ocho. (volver)",["volvemos","vuelvemos","vuelvimos","volvimos"],"A ditongação o→ue não acontece em nosotros/vosotros."],
+  ["pres",2,"Ellos ___ ocho horas cada noche. (dormir)",["duermen","dormen","durmen","dormien"],"Dormir: o→ue (duermo, duermes, duerme, dormimos, dormís, duermen)."],
+  ["pres",2,"Yo ___ con cuidado. (conducir)",["conduzco","conduco","conduzo","conducio"],"Verbos em -ducir fazem -zco na 1ª pessoa: conduzco, traduzco."],
+  ["pres",1,"Yo ___ las llaves en la mesa. (poner)",["pongo","pono","ponho","poneo"],"Poner: pongo, pones, pone..."],
+  ["pres",2,"Ella siempre ___ un café. (pedir)",["pide","pede","pedí","pidió"],"Pedir: e→i (pido, pides, pide...)."],
+  ["pres",1,"¿Tú ___ venir conmigo? (querer)",["quieres","queres","quires","querés"],"Querer: e→ie (quiero, quieres, quiere...). “Querés” é a forma do voseo."],
+
+  // Gustar
+  ["gus",1,"A mí me ___ los libros de aventuras.",["gustan","gusta","gusto","gustas"],"O verbo concorda com a coisa de que se gosta: los libros → gustan."],
+  ["gus",1,"A nosotros ___ gusta bailar.",["nos","nosotros","les","se"],"A nosotros → nos gusta."],
+  ["gus",2,"A Ana le ___ las vacaciones en la playa.",["encantan","encanta","encantas","encantamos"],"Encantar funciona como gustar: concorda com “las vacaciones”."],
+  ["gus",2,"A ellos ___ interesa la política.",["les","los","se","le"],"A ellos → les interesa."],
+  ["gus",2,"—No me gusta el café. —A mí ___.",["tampoco","también","sí","nada"],"Para concordar com uma frase negativa: “tampoco”."],
+  ["gus",1,"—Me gusta el cine. —A mí ___.",["también","tampoco","no","nada"],"Para concordar com frase afirmativa: “también”."],
+  ["gus",2,"—No me gusta el fútbol. —A mí ___. Me encanta.",["sí","también","tampoco","no"],"Para discordar de uma frase negativa: “a mí sí”."],
+
+  // Pronomes
+  ["pro",2,"—¿Le diste el libro a Juan? —Sí, ___ di.",["se lo","le lo","lo le","se le"],"Le/les + lo/la/los/las → se lo, se la..."],
+  ["pro",1,"Las llaves, ¿dónde ___ pusiste?",["las","les","los","la"],"Objeto direto feminino plural: las."],
+  ["pro",2,"El coche es muy caro, pero quiero ___.",["comprarlo","lo comprar","comprar lo","comprarle lo"],"Com infinitivo, o pronome vai colado no final (ou antes do verbo conjugado: lo quiero comprar)."],
+  ["pro",2,"(Tú) ___ el libro. (dar + me + lo)",["Dámelo","Me lo da","Dalo me","Dámele"],"No imperativo afirmativo os pronomes vão no final, colados: dámelo."],
+  ["pro",3,"No ___ digas a María, es un secreto.",["se lo","le lo","lo","díselo"],"No imperativo negativo os pronomes vêm antes: no se lo digas."],
+  ["pro",2,"Ayer vi a tus padres; ___ vi en el parque.",["los","les","se","las"],"Objeto direto masculino plural: los."],
+  ["pro",3,"Qual frase está correta?",["Se lo he dicho.","Le lo he dicho.","Lo le he dicho.","Se le lo he dicho."],"Quando le/les encontra lo/la/los/las, vira “se”: se lo."],
+  ["pro",1,"Este libro es ___. (de mí)",["mío","mi","mí","me"],"Possessivo depois do verbo: mío, tuyo, suyo..."],
+  ["pro",2,"Es un amigo ___ de la universidad.",["mío","mi","me","de mí"],"Depois do substantivo usa-se a forma longa: un amigo mío."],
+  ["pro",2,"___ chicos de allí al fondo son mis primos.",["Aquellos","Estos","Esos","Aquel"],"Para o que está longe de quem fala e de quem ouve: aquel/aquella/aquellos/aquellas."],
+
+  // Passados
+  ["pas",1,"Ayer ___ al cine con mi novia. (ir)",["fui","iba","he ido","voy"],"Marcador “ayer”: pretérito indefinido."],
+  ["pas",2,"Esta mañana ___ muy tarde. (yo, desayunar)",["he desayunado","desayunaba","había desayunado","desayunaré"],"Com “esta mañana / hoy / esta semana” a norma peninsular usa o pretérito perfecto."],
+  ["pas",2,"Cuando era niño, ___ en un pueblo pequeño. (vivir)",["vivía","viví","he vivido","viviré"],"Descrição de hábitos no passado: pretérito imperfecto."],
+  ["pas",2,"Mientras yo ___ la tele, sonó el teléfono. (ver)",["veía","vi","he visto","veo"],"Ação em andamento no passado interrompida por outra: imperfecto."],
+  ["pas",2,"Cuando llegué a la estación, el tren ya ___. (salir)",["había salido","ha salido","salía","saldrá"],"Ação anterior a outra ação passada: pretérito pluscuamperfecto."],
+  ["pas",2,"Ellos ___ regalos para todos. (traer)",["trajeron","traieron","trajieron","traeron"],"Traer no indefinido: traje, trajiste, trajo... trajeron (sem i)."],
+  ["pas",2,"¿Qué ___ tú el fin de semana pasado? (hacer)",["hiciste","haciste","hizo","hicistes"],"Hacer: hice, hiciste, hizo, hicimos, hicisteis, hicieron."],
+  ["pas",2,"Ayer Marta no ___ venir porque estaba enferma. (poder)",["pudo","podió","puede","podía venido"],"Poder no indefinido: pude, pudiste, pudo..."],
+  ["pas",3,"El sábado nosotros ___ diez kilómetros. (andar)",["anduvimos","andamos ido","andábamos sido","anduvemos"],"Andar é irregular no indefinido: anduve, anduviste, anduvo, anduvimos..."],
+  ["pas",2,"Él ___ una pizza y yo una ensalada. (pedir)",["pidió","pedió","pidí","pedio"],"Pedir no indefinido: na 3ª pessoa e→i (pidió, pidieron)."],
+  ["pas",2,"El niño ___ el libro entero en un día. (leer)",["leyó","leió","leeó","lió"],"Leer: leí, leíste, leyó, leímos, leísteis, leyeron."],
+  ["pas",1,"¿Quién ha ___ la ventana? (abrir)",["abierto","abrido","abiertado","abrió"],"Particípio irregular: abrir → abierto."],
+  ["pas",1,"Hoy he ___ una carta a mi madre. (escribir)",["escrito","escribido","escribiendo","escribió"],"Particípio irregular: escribir → escrito."],
+  ["pas",2,"¿Quién ha ___ el vaso? (romper)",["roto","rompido","rompto","rompió"],"Particípio irregular: romper → roto."],
+  ["pas",2,"Mis padres todavía no han ___ de viaje. (volver)",["vuelto","volvido","volto","vuelvido"],"Particípio irregular: volver → vuelto."],
+  ["pas",2,"Nunca ___ en México.",["he estado","estaba","estuviera","estando"],"Experiência de vida até agora (nunca, alguna vez): pretérito perfecto."],
+
+  // Futuro e condicional
+  ["fut",2,"Mañana ___ más tiempo libre. (yo, tener)",["tendré","teneré","tenré","tendría"],"Futuro irregular: tener → tendr-: tendré."],
+  ["fut",3,"—¿Qué hora es? —No sé, ___ las diez.",["serán","son seguro","fueron","serían seguramente"],"O futuro também expressa suposição sobre o presente: “serán las diez” = devem ser dez horas."],
+  ["fut",2,"Yo que tú, ___ con ella. (hablar)",["hablaría","hablaré","hablara","hablo"],"Para dar conselho (“yo que tú”, “yo en tu lugar”) usa-se o condicional."],
+  ["fut",2,"Mañana ___ sol en todo el país. (hacer)",["hará","hacerá","hace será","hazrá"],"Futuro irregular: hacer → har-: hará."],
+  ["fut",2,"¿___ ayudarme con esta caja, por favor? (poder, tú)",["Podrías","Poderías","Pudirías","Puedrías"],"Condicional de cortesia: podr- + ías."],
+  ["fut",3,"Me dijo que ___ al día siguiente. (venir)",["vendría","venirá","vendrá ayer","vino mañana"],"Futuro em relação a um passado (discurso indireto): condicional."],
+  ["fut",2,"Nosotros ___ de casa a las ocho. (salir)",["saldremos","saliremos","salderemos","salimos mañana"],"Futuro irregular: salir → saldr-."],
+  ["fut",2,"Te lo ___ mañana. (decir, yo)",["diré","deciré","dizeré","dicé"],"Futuro irregular: decir → dir-."],
+
+  // Perífrases
+  ["per",1,"Mañana ___ visitar a mi abuela.",["voy a","vou","voy","iré a de"],"Ir a + infinitivo = futuro próximo/plano."],
+  ["per",2,"___ de llegar; todavía no me he duchado.",["Acabo","Acabé","Termino","Llego"],"Acabar de + infinitivo (no presente) = algo que aconteceu agora mesmo."],
+  ["per",2,"Dejé ___ fumar hace un año.",["de","a","que","por"],"Dejar de + infinitivo = parar de fazer algo."],
+  ["per",3,"___ tres años estudiando español.",["Llevo","Hago","Tengo","Estoy"],"Llevar + tempo + gerúndio indica há quanto tempo se faz algo."],
+  ["per",1,"Tengo ___ estudiar para el examen.",["que","de","a","por"],"Obrigação pessoal: tener que + infinitivo."],
+  ["per",2,"Después del divorcio, volvió ___ casarse.",["a","de","en","por"],"Volver a + infinitivo = fazer de novo."],
+  ["per",2,"Ellos están ___ el periódico. (leer)",["leyendo","leiendo","lendo","leído"],"Gerúndio de leer: leyendo."],
+  ["per",2,"Juan sigue ___ en Madrid. (vivir)",["viviendo","vivir","vivido","a vivir"],"Seguir + gerúndio = continuar fazendo algo."],
+
+  // Preposições
+  ["prep",1,"Ayer vi ___ María en la calle.",["a","—","de","en"],"Objeto direto de pessoa leva a preposição “a”."],
+  ["prep",1,"Este regalo es ___ ti.",["para","por","a","de"],"Destinatário: para."],
+  ["prep",1,"Muchas gracias ___ tu ayuda.",["por","para","de","a"],"Agradecimento e causa: por."],
+  ["prep",2,"Siempre paseamos ___ el parque.",["por","para","en por","a"],"Movimento através de um lugar: por."],
+  ["prep",2,"Voy al trabajo ___ pie.",["a","en","de","por"],"Ir a pie. Mas: en coche, en tren, en bici."],
+  ["prep",1,"Viajamos a Sevilla ___ tren.",["en","de","a","por el"],"Meio de transporte: en tren, en avión, en coche."],
+  ["prep",2,"Estudio mucho ___ aprobar el examen.",["para","por","a","de"],"Finalidade: para + infinitivo."],
+  ["prep",2,"Lo hizo todo ___ amor.",["por","para","de","a"],"Causa ou motivo: por."],
+  ["prep",3,"Tengo que entregar el trabajo ___ el viernes.",["para","por","a","en"],"Prazo limite: para."],
+
+  // Imperativo
+  ["imp",1,"(Tú) ___ la puerta, por favor. (cerrar)",["Cierra","Cerra","Cierre","Cierras"],"Imperativo afirmativo de tú = 3ª pessoa do presente: cierra."],
+  ["imp",2,"(Tú) ___ aquí ahora mismo. (venir)",["Ven","Viene","Venga","Vienes"],"Imperativos irregulares de tú: ven, pon, sal, ten, haz, di, ve, sé."],
+  ["imp",2,"(Usted) ___ asiento, por favor. (tomar)",["Tome","Toma","Tomes","Tomad"],"Imperativo de usted = presente do subjuntivo: tome."],
+  ["imp",2,"(Tú) No ___ eso. (hacer)",["hagas","haz","haces","hace"],"Imperativo negativo = presente do subjuntivo: no hagas."],
+  ["imp",3,"(Ustedes) ___ con cuidado. (conducir)",["Conduzcan","Conducen","Conducid","Conducan"],"Imperativo de ustedes = subjuntivo: conduzcan."],
+  ["imp",2,"(Tú) ___ la verdad. (decir)",["Di","Dice","Diga","Dices"],"Imperativo irregular: decir → di."],
+  ["imp",2,"(Tú) ___ la mesa, que vamos a comer. (poner)",["Pon","Pone","Ponga","Pones"],"Imperativo irregular: poner → pon."],
+  ["imp",3,"(Vosotros) ___, por favor. (sentarse)",["Sentaos","Sentados","Sentados os","Sentáis"],"Vosotros + os: o -d cai: sentad + os → sentaos."],
+  ["imp",2,"Tranquilo, no ___. (preocuparse, tú)",["te preocupes","preocúpate","te preocupas","preocupes te"],"Negativo: pronome antes e subjuntivo: no te preocupes."],
+
+  // Subjuntivo
+  ["sub",2,"Quiero que tú ___ conmigo a la fiesta. (venir)",["vengas","vienes","venir","vendrás"],"Desejo sobre outra pessoa (querer que…) pede subjuntivo."],
+  ["sub",2,"Espero que mañana ___ buen tiempo. (hacer)",["haga","hace","hará","hacer"],"Esperar que + subjuntivo."],
+  ["sub",2,"Cuando ___ a casa esta noche, te llamaré. (llegar)",["llegue","llego","llegaré","llegar"],"“Cuando” + ação futura pede subjuntivo (em português usaríamos o futuro do subjuntivo: quando eu chegar)."],
+  ["sub",3,"Es importante que (vosotros) ___ todos los días. (estudiar)",["estudiéis","estudiáis","estudiaréis","estudiar"],"Expressões de valoração (es importante que…) pedem subjuntivo."],
+  ["sub",3,"No creo que él ___ razón. (tener)",["tenga","tiene","tendrá","tener"],"Opinião negativa (no creo que) pede subjuntivo."],
+  ["sub",3,"Creo que él ___ razón. (tener)",["tiene","tenga","tuviera","tener"],"Opinião afirmativa (creo que) pede indicativo."],
+  ["sub",2,"¡Ojalá ___ venir a mi cumpleaños! (poder, tú)",["puedas","puedes","podrás","poder"],"Ojalá + subjuntivo."],
+  ["sub",3,"Busco un piso que ___ terraza. (tener)",["tenga","tiene","tendrá","tener"],"Antecedente desconhecido/hipotético pede subjuntivo."],
+  ["sub",3,"Vivo en un piso que ___ terraza. (tener)",["tiene","tenga","tuviera","tener"],"Antecedente conhecido e real pede indicativo."],
+  ["sub",3,"Te lo explico para que lo ___. (entender)",["entiendas","entiendes","entenderás","entender"],"“Para que” sempre pede subjuntivo."],
+  ["sub",2,"Me alegro de que ___ aquí. (estar, tú)",["estés","estás","estarás","estar"],"Sentimentos sobre ações de outra pessoa pedem subjuntivo."],
+  ["sub",3,"Llámame antes de que ___. (irse, tú)",["te vayas","te vas","te irás","irte"],"“Antes de que” sempre pede subjuntivo."],
+  ["sub",3,"Es verdad que el examen ___ difícil. (ser)",["es","sea","será que","ser"],"Expressões de certeza afirmativas (es verdad que, es cierto que) pedem indicativo."],
+  ["sub",2,"Qual é o presente do subjuntivo de “saber” (yo)?",["sepa","saba","sepo","sabe"],"Saber → sepa, sepas, sepa..."],
+
+  // Outros
+  ["out",1,"No hay ___ en casa.",["nadie","ninguno","nada","alguien"],"Pessoa indefinida em frase negativa: nadie."],
+  ["out",2,"—¿Tienes algún libro de cocina? —No, no tengo ___.",["ninguno","ningún","nada","nadie"],"Sem substantivo depois, usa-se a forma completa: ninguno."],
+  ["out",1,"Ana es ___ alta que su hermana.",["más","mas","muy","mucho"],"Comparativo de superioridade: más… que."],
+  ["out",1,"Este libro es ___ que el otro. (bueno)",["mejor","más bueno de","bueno más","mayor"],"Comparativo irregular: bueno → mejor."],
+  ["out",2,"Tengo tantos libros ___ tú.",["como","que","de","cuanto"],"Comparativo de igualdade: tanto… como."],
+  ["out",3,"Tiene más ___ cien amigos en la red.",["de","que","como","a"],"Antes de número, “más de”."],
+  ["out",2,"Lo ___ dices no es verdad.",["que","cual","quien","cuyo"],"“Lo que” = o que."],
+  ["out",3,"Tengo un amigo ___ padre es piloto.",["cuyo","cuya","que su","quien"],"“Cuyo” concorda com a coisa possuída (padre → cuyo)."],
+  ["out",3,"Dijo: “Estoy cansado”. → Dijo que ___ cansado.",["estaba","está estado","estuve","estaré"],"No discurso indireto no passado, o presente vira imperfecto."],
+  ["out",1,"Como se diz 15:30?",["Son las tres y media.","Son las quince y media hora.","Es las tres y medio.","Son tres y media horas."],"Son las tres y media (de la tarde)."],
+  ["out",2,"Como se escreve 500 em espanhol?",["quinientos","cincocientos","quinhentos","cincuentos"],"500 = quinientos. Também irregulares: 700 setecientos, 900 novecientos."],
+  ["out",2,"Qual palavra está escrita corretamente?",["examen","exámen","examén","exâmen"],"“Examen” é paroxítona terminada em -n: não leva acento. Mas no plural sim: exámenes."],
+  ["out",1,"Como se escreve “ação” em espanhol?",["acción","acsión","ación","acão"],"O sufixo -ção geralmente corresponde a -ción (às vezes com cc: acción, dirección)."],
+  ["out",2,"No sé ___ vive Luis.",["dónde","donde","adónde vive","en qué"],"Em perguntas indiretas o interrogativo mantém o acento: no sé dónde."],
+
+  // Tradução PT → ES
+  ["tpe",1,"“Ela está grávida.”",["Ella está embarazada.","Ella está grávida.","Ella es embarazada.","Ella está embarazosa."],"Grávida = embarazada, com o verbo estar."],
+  ["tpe",2,"“Eu me lembro dessa viagem.”",["Me acuerdo de ese viaje.","Me acuerdo de esa viaje.","Me acordo de ese viaje.","Me lembro de ese viaje."],"Lembrar-se = acordarse de. Viaje é masculino."],
+  ["tpe",2,"“Hoje eu acordei cedo.”",["Hoy me he despertado temprano.","Hoy me he acordado temprano.","Hoy me he despertado cedo.","Hoy he acordado temprano."],"Acordar = despertarse; cedo = temprano."],
+  ["tpe",2,"“Tenho que ir ao escritório.”",["Tengo que ir a la oficina.","Tengo que ir al escritorio.","Tengo de ir a la oficina.","Tengo que ir en la oficina."],"Escritório = oficina. Escritorio é a escrivaninha."],
+  ["tpe",1,"“Não há ninguém em casa.”",["No hay nadie en casa.","No hay ninguno en casa.","No está nadie en casa.","No hay nadie a casa."],"Ninguém = nadie."],
+  ["tpe",2,"“Faz dois anos que moro aqui.”",["Hace dos años que vivo aquí.","Hace dos años que moro aquí.","Hay dos años que vivo aquí.","Hacen dos años que vivo aquí."],"Tempo decorrido: hace (sempre no singular). Morar = vivir."],
+  ["tpe",2,"“Espero que você goste.”",["Espero que te guste.","Espero que te gusta.","Espero que gustes.","Espero que tú gustes de."],"Esperar que + subjuntivo; gustar com pronome."],
+  ["tpe",3,"“Quando eu chegar, te ligo.”",["Cuando llegue, te llamo.","Cuando llegaré, te llamo.","Cuando llegar, te llamo.","Cuando llego, te ligo."],"O futuro do subjuntivo português vira presente do subjuntivo: cuando llegue. Ligar = llamar."],
+  ["tpe",3,"“Se eu puder, eu vou.”",["Si puedo, voy.","Si pueda, voy.","Si podré, voy.","Si pudiere, voy."],"Depois de “si” (condição real) usa-se o presente do indicativo, nunca o presente do subjuntivo."],
+  ["tpe",2,"“Você me dá um copo de água?”",["¿Me das un vaso de agua?","¿Me das una copa de agua?","¿Me das un copo de agua?","¿Me das un vaso de la agua?"],"Copo = vaso. Copa é taça."],
+  ["tpe",1,"“Ele é muito alto.”",["Él es muy alto.","Él es mucho alto.","Él es muito alto.","Él tiene muy alto."],"Muy + adjetivo."],
+  ["tpe",1,"“Eu gosto de café.”",["Me gusta el café.","Yo gusto de café.","Me gusta de café.","Me gusto el café."],"Gustar não leva “de”: me gusta el café."],
+  ["tpe",1,"“Ontem fomos à praia.”",["Ayer fuimos a la playa.","Ayer fuemos a la playa.","Ayer fuimos a la praya.","Ayer íbamos en playa."],"Ir no indefinido: fuimos. Praia = playa."],
+  ["tpe",2,"“O leite está quente.”",["La leche está caliente.","El leche está caliente.","La leche está quente.","La leche es caliente."],"Leche é feminino; quente = caliente."],
+  ["tpe",2,"“Traz o livro para mim.” (tu)",["Tráeme el libro.","Tráigame el libro.","Me trae el libro.","Traerme el libro."],"Imperativo de tú com pronome no final: tráeme. “Tráigame” seria para usted."],
+  ["tpe",3,"“Eu já tinha comido quando ele chegou.”",["Ya había comido cuando él llegó.","Ya tenía comido cuando él llegó.","Ya comí cuando él ha llegado.","Ya había comido cuando él llegué."],"Mais-que-perfeito composto: haber (había) + particípio, nunca “tener”."],
+  ["tpe",1,"“Estou com fome.”",["Tengo hambre.","Estoy hambre.","Tengo fome.","Soy con hambre."],"Fome, sede, frio, calor, sono → tener: tengo hambre, tengo sed, tengo sueño."],
+  ["tpe",2,"“Estou com pressa.”",["Tengo prisa.","Tengo presa.","Estoy con presa.","Estoy prisa."],"Pressa = prisa (e “presa” é represa ou prisioneira!)."],
+  ["tpe",2,"“Você poderia me ajudar?” (tu)",["¿Podrías ayudarme?","¿Poderías ayudarme?","¿Podrías me ayudar?","¿Podrías ajudarme?"],"Condicional podrías; pronome colado ao infinitivo."],
+  ["tpe",2,"“Acabei de chegar.”",["Acabo de llegar.","Acabé de llegar.","Acabo de chegar.","Acabo llegar."],"“Acabar de” para passado recente vai no presente: acabo de llegar."],
+  ["tpe",2,"“Nunca estive na Espanha.”",["Nunca he estado en España.","Nunca estuve en la España.","Nunca he estado a España.","Nunca he sido en España."],"Nomes de países geralmente sem artigo; experiência = pretérito perfecto."],
+
+  // Tradução ES → PT
+  ["tep",2,"“Me quedé en casa porque llovía.”",["Fiquei em casa porque chovia.","Quis ficar em casa porque chovia.","Saí de casa porque chovia.","Fiquei em casa porque vai chover."],"Quedarse = ficar."],
+  ["tep",2,"“El sitio estaba lleno de gente.”",["O lugar estava cheio de gente.","O sítio estava cheio de gente.","O site estava lotado.","O lugar estava vazio."],"Sitio = lugar; lleno = cheio."],
+  ["tep",2,"“Tengo un rato libre.”",["Tenho um tempinho livre.","Tenho um rato solto.","Tenho um quarto livre.","Tenho um dia livre."],"Rato = momento, pouco tempo."],
+  ["tep",2,"“La cena estaba exquisita.”",["O jantar estava delicioso.","A cena estava esquisita.","O jantar estava estranho.","A ceia estava esquisita."],"Cena = jantar; exquisito = delicioso."],
+  ["tep",2,"“Todavía no ha llegado.”",["Ainda não chegou.","Todavia, não chegou.","Já não chega mais.","Contudo, chegou."],"Todavía = ainda."],
+  ["tep",3,"“Él es zurdo.”",["Ele é canhoto.","Ele é surdo.","Ele é teimoso.","Ele é careca."],"Zurdo = canhoto; surdo = sordo."],
+  ["tep",2,"“Se me olvidaron las llaves.”",["Esqueci as chaves.","As chaves me esqueceram.","Lembrei das chaves.","Perdi as chaves."],"Construção com “se me” para algo involuntário: esqueci."],
+  ["tep",2,"“Ojalá tengas suerte.”",["Tomara que você tenha sorte.","Olha, você tem sorte.","Você teve sorte.","Talvez você tinha sorte."],"Ojalá = tomara (que)."],
+  ["tep",3,"“Te echo de menos.”",["Sinto sua falta.","Eu te expulso.","Te jogo de menos.","Penso menos em você."],"Echar de menos = sentir falta (também se diz “extrañar”)."],
+  ["tep",1,"“Hace mucho calor.”",["Faz muito calor.","Faz muito frio.","Há pouco calor.","Ele sente muito calor."],"Hacer + fenômeno do tempo: hace calor, hace frío."],
+  ["tep",2,"“Me da igual.”",["Tanto faz para mim.","Me dê um igual.","Sou igual a você.","Isso me deixa igual."],"Me da igual = tanto faz."],
+  ["tep",3,"“Estoy harto de esperar.”",["Estou farto de esperar.","Estou com fome de esperar.","Estou feliz em esperar.","Estou atrasado para esperar."],"Harto = farto, cansado."],
+  ["tep",2,"“Ya no vive aquí.”",["Ele não mora mais aqui.","Ele ainda mora aqui.","Ele já morou aqui.","Ele vai morar aqui."],"Ya no = não… mais."],
+  ["tep",3,"“Apenas llegué, empezó a llover.”",["Assim que cheguei, começou a chover.","Apenas eu cheguei, e começou a chover.","Só eu cheguei antes da chuva.","Quase não cheguei por causa da chuva."],"“Apenas” pode significar “assim que, mal” (ou “quase não”). “Apenas” português = solo/solamente."],
+  ["tep",1,"“¿Me pasas la sal?”",["Você me passa o sal?","Você me passa a sala?","Você passa na sala?","Você me pesa o sal?"],"La sal = o sal."],
+  ["tep",2,"“Me duele la espalda.”",["Minhas costas doem.","Meu ombro dói.","Minha espada dói.","Meu peito dói."],"Espalda = costas; hombro = ombro."],
+  ["tep",1,"“Quizás venga mañana.”",["Talvez venha amanhã.","Com certeza veio amanhã.","Quis vir amanhã.","Quase veio amanhã."],"Quizás = talvez."],
+  ["tep",2,"“Hay que tener cuidado.”",["É preciso ter cuidado.","Ele tem que ter cuidado.","Houve cuidado.","Teve cuidado."],"Hay que + infinitivo = obrigação impessoal (é preciso)."]
+];
+
+const $ = id => document.getElementById(id);
+let selThemes = new Set(Object.keys(THEMES)), selLevels = new Set(["1","2","3"]), size = 20;
+let deck = [], idx = 0, score = 0, wrong = [];
+
+function chip(parent, label, pressed, onToggle) {
+  const b = document.createElement("button");
+  b.className = "chip"; b.textContent = label; b.setAttribute("aria-pressed", pressed);
+  b.onclick = () => onToggle(b);
+  parent.appendChild(b);
+  return b;
+}
+function toggleSet(set, key) { return b => {
+  set.has(key) ? set.delete(key) : set.add(key);
+  b.setAttribute("aria-pressed", set.has(key)); updateAvailable();
+};}
+function pool() { return Q.filter(q => selThemes.has(q[0]) && selLevels.has(String(q[1]))); }
+function updateAvailable() {
+  const n = pool().length;
+  $("available").textContent = n + " perguntas disponíveis";
+  $("start").disabled = n === 0;
+}
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+const allBtn = chip($("themes"), "Todos", true, b => {
+  const on = selThemes.size !== Object.keys(THEMES).length;
+  selThemes = new Set(on ? Object.keys(THEMES) : []);
+  [...$("themes").children].forEach(c => c.setAttribute("aria-pressed", on));
+  updateAvailable();
+});
+for (const [k, v] of Object.entries(THEMES)) chip($("themes"), v, true, b => {
+  toggleSet(selThemes, k)(b);
+  allBtn.setAttribute("aria-pressed", selThemes.size === Object.keys(THEMES).length);
+});
+for (const [k, v] of Object.entries(LEVELS)) chip($("levels"), v, true, toggleSet(selLevels, k));
+const sizeBtns = [10, 20, 30, 50].map(n => chip($("sizes"), String(n), n === size, b => {
+  size = n; sizeBtns.forEach(x => x.setAttribute("aria-pressed", x === b));
+}));
+updateAvailable();
+
+function start(questions) {
+  deck = questions; idx = 0; score = 0; wrong = [];
+  $("setup").classList.add("hidden"); $("result").classList.add("hidden"); $("quiz").classList.remove("hidden");
+  show();
+}
+function show() {
+  const q = deck[idx];
+  $("counter").textContent = `Pergunta ${idx + 1} de ${deck.length}`;
+  $("points").textContent = `${score} acerto${score === 1 ? "" : "s"}`;
+  $("progress").style.width = (idx / deck.length * 100) + "%";
+  $("qtags").innerHTML = `<span class="tag">${THEMES[q[0]]}</span><span class="tag d">${LEVELS[q[1]]}</span>`;
+  $("qtext").textContent = (q[0] === "tpe" || q[0] === "tep") ? `Qual é a melhor tradução de ${q[2]}?` : q[2];
+  $("opts").innerHTML = ""; $("feedback").innerHTML = ""; $("next").classList.add("hidden");
+  shuffle(q[3]).forEach((text, i) => {
+    const b = document.createElement("button");
+    b.className = "opt"; b.innerHTML = `<b>${"ABCD"[i]})</b><span></span>`;
+    b.querySelector("span").textContent = text;
+    b.onclick = () => answer(b, text);
+    $("opts").appendChild(b);
+  });
+}
+function answer(btn, text) {
+  const q = deck[idx], right = q[3][0], ok = text === right;
+  [...$("opts").children].forEach(b => {
+    b.disabled = true;
+    if (b.querySelector("span").textContent === right) b.classList.add("ok");
+  });
+  if (ok) score++; else { btn.classList.add("bad"); wrong.push({ q, chosen: text }); }
+  $("feedback").innerHTML = `<div class="exp ${ok ? "ok" : "bad"}"><strong>${ok ? "¡Correcto! ✓" : "Incorrecto ✗ — a resposta é: " + esc(right)}</strong>${esc(q[4])}</div>`;
+  $("points").textContent = `${score} acerto${score === 1 ? "" : "s"}`;
+  $("next").textContent = idx === deck.length - 1 ? "Ver resultado" : "Próxima →";
+  $("next").classList.remove("hidden"); $("next").focus();
+}
+function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+function finish() {
+  $("quiz").classList.add("hidden"); $("result").classList.remove("hidden");
+  const pct = Math.round(score / deck.length * 100);
+  $("final").textContent = `${score}/${deck.length}`;
+  $("verdict").textContent = pct === 100 ? "¡Perfecto! Nenhum erro. 🎉" : pct >= 80 ? `¡Muy bien! ${pct}% de acertos.` :
+    pct >= 60 ? `¡Bien! ${pct}% de acertos. Revise os erros abaixo.` : `${pct}% de acertos. ¡Ánimo! Vale revisar esses temas no livro.`;
+  $("redo").classList.toggle("hidden", wrong.length === 0);
+  $("review").innerHTML = wrong.map(w => `<div><b>${esc(w.q[2])}</b><br>
+    <span class="yours">Sua resposta: ${esc(w.chosen)}</span><br>
+    <span class="right">Correta: ${esc(w.q[3][0])}</span><br><small>${esc(w.q[4])}</small></div>`).join("");
+}
+
+$("start").onclick = () => start(shuffle(pool()).slice(0, size));
+$("next").onclick = () => { idx++; idx < deck.length ? show() : finish(); };
+$("again").onclick = () => { $("result").classList.add("hidden"); $("setup").classList.remove("hidden"); };
+$("redo").onclick = () => start(shuffle(wrong.map(w => w.q)));
+</script>
+</body>
+</html>
