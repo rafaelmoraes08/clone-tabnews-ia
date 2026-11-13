@@ -1,13 +1,18 @@
 import Confete from "./components/Confete";
 
-export const dynamic = "force-dynamic";
+// Revalida a página a cada 60s (ISR): o HTML é servido do cache e a API
+// externa é consultada em segundo plano, em vez de a cada requisição.
+export const revalidate = 60;
 
 const URL_API_CONTEUDOS =
   "https://www.tabnews.com.br/api/v1/contents?per_page=1&strategy=new";
 
 async function buscarTotalDeConteudos() {
   try {
-    const resposta = await fetch(URL_API_CONTEUDOS, { cache: "no-store" });
+    const resposta = await fetch(URL_API_CONTEUDOS, {
+      next: { revalidate },
+      signal: AbortSignal.timeout(5000),
+    });
     if (!resposta.ok) return null;
     const total = Number(resposta.headers.get("x-pagination-total-rows"));
     return Number.isFinite(total) ? total : null;
